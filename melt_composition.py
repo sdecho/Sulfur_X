@@ -3,6 +3,7 @@
 # not change. The example below is for Hawaiian magma.
 # The Please revise this accordingly for the composition of the volcanic system of interest, and notify the changes
 # if the results are in use of a publication.
+import numpy as np
 
 class MeltComposition:
     """melt fraction: 0-1
@@ -12,6 +13,38 @@ class MeltComposition:
     def __init__(self, melt_fraction, choice):
 
         if choice == 1:
+
+            predict = np.poly1d([-72.765435320818, 158.54677801123495, -113.72954955756988, 76.11265431999792])
+            sio2 = predict(melt_fraction)
+
+            predict = np.poly1d([30.889253254991335, -61.10696836195861, 40.12745052961432, 10.026628016617387])
+            al2o3 = predict(melt_fraction)
+
+            predict = np.poly1d([19.597465247043402, -44.04325440505517, 28.372613351186097, 3.159982553876044])
+            feot = predict(melt_fraction)
+
+            predict = np.poly1d([5.302912442165689, -14.393920772088098, 14.912208032308612, -0.15194598112557356])
+            mgo = predict(melt_fraction)
+
+            predict = np.poly1d([4.539834085035361, -19.39383474158969, 24.88618050531579, 1.5206780856626205])
+            cao = predict(melt_fraction)
+
+            predict = np.poly1d([7.924390462742504, -11.546093194223946, 2.1735388766596624, 3.9412284800482404])
+            na2o = predict(melt_fraction)
+
+            predict = np.poly1d([-8.851934814821893, 18.052395870363963, -12.061849825926886, 3.0399461020136864])
+            k2o = predict(melt_fraction)
+
+            predict = np.poly1d([1.437198737372707, -2.2759682021553447, 0.8921866081219649, 0.09293045882553042])
+            p2o5 = predict(melt_fraction)
+
+            predict = np.poly1d([-0.12018591479442908, 0.09439973748691072, 0.03101628989864243, 0.1360707556864547])
+            mno = predict(melt_fraction)
+
+            tio2 = 0
+
+            '''
+            # Echo's version
             if melt_fraction > 0.6:
                 sio2 = 31.244 * melt_fraction ** 2 - 53.273 * melt_fraction + 72.423
                 al2o3 = -2.712 * melt_fraction ** 2 + 4.7856 * melt_fraction + 15.137
@@ -35,6 +68,7 @@ class MeltComposition:
                 p2o5 = 0.3592 * melt_fraction ** 2 - 0.6851 * melt_fraction + 0.5388
                 mno = 0.0283 * melt_fraction + 0.1444
                 tio2 = -0.2832 * melt_fraction + 1.2179
+            '''
         else:
             sio2 = 50.5 / melt_fraction
             al2o3 = 13.3 / melt_fraction
