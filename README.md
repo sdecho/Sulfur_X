@@ -1,6 +1,10 @@
 # Sulfur_X
 A model of sulfur degassing during magma ascent
 
+Please cite Sulfur_X as follows:
+Ding, S., Plank, T., Wallace, P., Rasmussen, D. J., in review. Sulfur_X: A model of sulfur degassing during magma ascent. Geochemistry, Geophysics, Geosystems. 
+Available on EarthArxiv: https://eartharxiv.org/repository/view/3559/
+
 1.	Instructions for using Sulfur_X
 
 Sulfur_X is written in Python and can be run in python 3.9 or any version higher. It requires packages of Pandas, Numpy and Scipy. The package includes one main function script, several other scripts of different classes called by the main function, and two example csv files for inputting melt inclusion data for comparison. Please keep all these files in the same folder and do not change the name of any python script file. To run the program, please open the main function script named “main_Fuego.py”, change the basic inputs and the advanced parameters accordingly and run. Melt composition can be modified in the python script named “melt_composition.py”. Parameters for low pressure (<20 MPa) degassing (INT and BAR) can be changed in the python script named “degassingrun.py”. The example input to reproduce our results for Fuego and Mauna Kea are listed in Table 1. 
