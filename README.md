@@ -3,7 +3,7 @@ A model of sulfur degassing during magma ascent
 
 Please cite Sulfur_X as follows:
 Ding, S., Plank, T., Wallace, P., Rasmussen, D. J., in review. Sulfur_X: A model of sulfur degassing during magma ascent. Geochemistry, Geophysics, Geosystems. 
-Available on EarthArxiv: https://eartharxiv.org/repository/view/3559/
+https://doi.org/10.31223/X56H0F. The related manuscritp is available on EarthArxiv: https://eartharxiv.org/repository/view/3559/
 
 1.	Instructions for using Sulfur_X
 
