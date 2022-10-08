@@ -59,3 +59,10 @@ mi_name: name (input as str) of the csv file containing melt inclusion data.
 All the results in the dataframe “df_results” are output in a csv file. The output file name should be changed for each run. Otherwise, the result file would be rewritten.
 output_name: name (input as str) of the csv file for the model results. 
 Result figures similar to Figure 6, 7, 8 and 9 in the main text will be plotted and show in the end of the run (results of monte-carlo simulations are not included). This part can be modified as needed. 
+In addition to the key outputs discussed in the main text, the output file also includes calculated sulfur contents at sulfide saturation (SCSS, Smythe et al., 2017), sulfate contents at anhydrite saturation (SCAS, Zajacz and Tsay, 2019) and hydrogen fugacity (fH2, Ohmoto and Kerrick, 1977) along degassing. These values only serve as references if the users are interested, and do not affect the actual degassing calculations. If these results are used, please make sure cite the references listed above accordingly.
+
+1.5 Troubleshooting guides
+1.5.1 When testing a new dataset, we suggest the user turn off the fO2 tracker first. This initial run will give a baseline S degassing trend without the impact of evolving fO2 on partition coefficients. 
+1.5.2 It is important to check that this initial run has a reasonable S6+/ΣS in the melt for the dataset. If the calculated S6+/ΣS in the melt appears too high or too low, the user should adjust the S-Fe relation in the inputs until the model runs with a reasonable initial S6+/ΣS for the given dataset. Then, the user can turn the fO2 tracker on to track the fO2 evolution during degassing. 
+1.5.3 Changing Sigma, the tolerance of the calculated log10fO2 (section 1.2.2), can also affect the fO2 run. If sigma is too small or too large, it may cause large excursions of fO2 calculations in the run.
+
