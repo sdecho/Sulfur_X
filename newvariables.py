@@ -94,6 +94,15 @@ class NewVariables:
                    "SCSS":empty_list,
                    "SCAS":empty_list,
                    "fH2":empty_list,
+                   "accXS_fluid": empty_list,
+                   "accXH2O_fluid": empty_list,
+                   "accXCO2_fluid": empty_list,
+                   "accXSO2_fluid": empty_list,
+                   "accXH2S_fluid": empty_list,
+                   "accmelt_fraction": empty_list,
+                   "accvapor_fraction": empty_list,
+                   "acccrystal_fraction": empty_list,
+                   "accCO2_S": empty_list,
                    }
         return my_data
 

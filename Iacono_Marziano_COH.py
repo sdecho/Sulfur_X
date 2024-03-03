@@ -1,3 +1,4 @@
+# Equation 21 in Iacono-Marziano fixed
 import numpy as np
 from scipy.optimize import fsolve, root
 #  Constants for CO2 solubility on anhydrous base
@@ -83,7 +84,7 @@ class IaconoMarziano:
         self.slope_h2o = a  # slope of K2O = a*H2O + b
         self.con_h2o = b  # constant of K2O =a*H2O + b
 
-    def saturation_pressure(self, carbonate_0, h2o_0):
+    def saturation_pressure(self, co2_0, h2o_0):
         nh2o = h2o_0 / (15.999 + 2 * 1.0079)
         xh2o = nh2o / (self.ntot + nh2o)
         xsio2 = self.nsio2 / (self.ntot + nh2o)
@@ -100,13 +101,13 @@ class IaconoMarziano:
         NBO = 2 * (xh2o + xk2o + xna2o + xcao + xmgo + xfeo - xal2o3) / \
               (2 * xsio2 + 2 * xtio2 + 3 * xal2o3 + xmgo + xfeo + xcao + xna2o + xk2o + xh2o)
 
-        u0 = np.array([self.Pb, 0.5])
-        u = root(self.func_initial, u0, (h2o_0, carbonate_0, AI, xfeo + xmgo, xna2o + xk2o, NBO, self.ntot, self.Tkc))
+        u0 = np.array([self.Pb, 0.9])
+        u = root(self.func_initial, u0, (h2o_0, co2_0, AI, xfeo + xmgo, xna2o + xk2o, NBO, self.ntot, self.Tkc))
         pressure_sat = u.x[0]
         XH2O_f = u.x[1]
         return pressure_sat, XH2O_f
 
-    def func_initial (self, u, h2o_0, carbonate_0, x_ai, x_feomgo, x_na2ok2o, NBO, anhy_ntot, T):
+    def func_initial (self, u, h2o_0, co2_0, x_ai, x_feomgo, x_na2ok2o, NBO, anhy_ntot, T):
         P_sat = u[0]
         XH2O_f = u[1]
         eq_H2O = (P_sat ** alpha_H2O) * (XH2O_f ** alpha_H2O) * np.exp(
@@ -114,7 +115,7 @@ class IaconoMarziano:
         eq_CO2 = (d_H2O * h2o_0 / (15.999 + 2 * 1.0079) / (anhy_ntot + h2o_0 / (15.999 + 2 * 1.0079))
                   + d_ACNK * x_ai + d_FE_MG * x_feomgo + d_NA_K * x_na2ok2o) \
                  + alpha_CO2 * np.log(P_sat * (1 - XH2O_f)) + beta_CO2 * NBO + b_CO2 + c_CO2 * P_sat / T - np.log(
-            carbonate_0)
+            co2_0)
         F = np.array([eq_H2O, eq_CO2])
         return F
 
@@ -158,7 +159,7 @@ class IaconoMarziano:
         eq_H2O = (P ** alpha_H2O) * (XH2O_f ** alpha_H2O) * np.exp(beta_H2O * NBO + b_H2O + c_H2O * P / T) - H2O_m
         eq_CO2 = (d_H2O * (H2O_m / (15.999 + 2 * 1.0079)) / (anhy_ntot + H2O_m / (15.999 + 2 * 1.0079))
                   + d_ACNK * x_ai + d_FE_MG * x_feomgo + d_NA_K * x_na2ok2o) \
-                 + alpha_CO2 * np.log(P * XCO2_f) + beta_CO2 * NBO + b_CO2 + c_CO2 * P / T - np.log(CO2_m * 60.009 /44.01)
+                 + alpha_CO2 * np.log(P * XCO2_f) + beta_CO2 * NBO + b_CO2 + c_CO2 * P / T - np.log(CO2_m)
         eq_totalP = XH2O_f + XCO2_f + XS_fluid - 1
         mb_h2o = fm * H2O_m + fv * 100 * XH2O_f * 18.015 / (XH2O_f * 18.015 + XCO2_f * 44.01 +
                                                             XS_fluid * rS_fluid * 64 + XS_fluid * (
@@ -183,7 +184,7 @@ class IaconoMarziano:
         eq_H2O = (np.log(P * XH2O_f) * alpha_H2O) + (beta_H2O * NBO + b_H2O + c_H2O * P / T) - np.log(H2O_m)
         eq_CO2 = (d_H2O * (H2O_m / (15.999 + 2 * 1.0079)) / (anhy_ntot + H2O_m / (15.999 + 2 * 1.0079))
                   + d_ACNK * x_ai + d_FE_MG * x_feomgo + d_NA_K * x_na2ok2o) \
-                 + alpha_CO2 * np.log(P * XCO2_f) + beta_CO2 * NBO + b_CO2 + c_CO2 * P / T - np.log(CO2_m * 60.009 / 44.01)
+                 + alpha_CO2 * np.log(P * XCO2_f) + beta_CO2 * NBO + b_CO2 + c_CO2 * P / T - np.log(CO2_m)
         eq_totalP = XH2O_f + XCO2_f + XS_fluid - 1
         mb_h2o = fm * H2O_m + fv * 100 * XH2O_f * 18.015 / (XH2O_f * 18.015 + XCO2_f * 44.01 +
                                                             XS_fluid * rS_fluid * 64 + XS_fluid * (
@@ -226,10 +227,10 @@ class IaconoMarziano:
         AI = xal2o3/(xcao + xna2o + xk2o)
 
 
-        wtcarbonate = np.exp((d_H2O * (wtH2O / (15.999 + 2 * 1.0079)) / (self.ntot + wtH2O / (15.999 + 2 * 1.0079))
+        wtCO2 = np.exp((d_H2O * (wtH2O / (15.999 + 2 * 1.0079)) / (self.ntot + wtH2O / (15.999 + 2 * 1.0079))
                   + d_ACNK * AI + d_FE_MG * (xfeo+xmgo) + d_NA_K * (xna2o + xk2o))\
                  + alpha_CO2 * np.log(PCO2) + beta_CO2 * NBO + b_CO2 + c_CO2 * self.Pb / self.Tkc)
-        wtCO2 = 44.01* wtcarbonate/ 60.009
+
         return wtH2O, wtCO2
 
 

@@ -16,7 +16,7 @@ BAR = 0
 
 class COHS_degassing:
     def __init__(self, pressure, temperature, COH_model, xlt_choice, S_Fe_choice, H2O_initial, CO2_initial,
-                 S_initial, a, b, monte_c):
+                 S_initial, a, b, monte_c, op):
         self.P = pressure
         self.T = temperature
         self.Tk = temperature + 273.15
@@ -29,6 +29,7 @@ class COHS_degassing:
         self.slope_h2o = a
         self.constant_h2o = b
         self.monte = monte_c
+        self.open_p = op
         # sulfide composition in wt.%; only relevant if SCSS is of interests.
         self.sulfide = {"Fe": 65.43,
                         "Ni": 0,
@@ -81,7 +82,7 @@ class COHS_degassing:
                               o2=df_results["fO2"][index - 1])
 
         def_variables = NewVariables(df_results["pressure"][index],
-                                     300)  # the inputs of P and l are not essential here.
+                                     600)  # the inputs of P and l are not essential here.
         fo2_tr, XH2O_fluid_tr, XCO2_fluid_tr, XSO2_f_tr, XH2S_f_tr, XS_f_tr, ferric_ratio_tr, wS_f_tr, XS6_m_tr, \
         XS2_m_tr, XS_m_tr, wH2O_m_tr, wCO2_m_tr, wS_m_tr, kd1_tr, kd2_tr, kd1a_tr, kd_combined_tr, rs_m_tr, \
         rs_f_tr, melt_fraction_tr, crystal_fraction_tr, vapor_fraction_tr \
@@ -106,7 +107,7 @@ class COHS_degassing:
         wS_m_tr[0] = df_results["wS_melt"][index - 1]
         kd1_tr[0] = re.kd_rxn1(xh2o=XH2O_fluid_tr[0])
         kd2_tr[0] = re.kd_rxn2(fo2=fo2_tr[0])
-        kd1a_tr[0] = re.kd_rxn1a(fo2=fo2_tr[0])
+        # kd1a_tr[0] = re.kd_rxn1a(fo2=fo2_tr[0])
         ferric_ratio_tr[0] = df_results["ferric_ratio"][index - 1]
         rs_melt_initial = rs_melt.sulfate
         rs_m_tr[0] = rs_melt_initial
@@ -140,10 +141,25 @@ class COHS_degassing:
                 initial_guess = np.array(
                     [melt_fraction_tr[j - 1], vapor_fraction_tr[j - 1], XH2O_f_initial,
                      XCO2_f_initial, wH2O_m_tr[j - 1], wCO2_m_tr[j - 1], crystal_fraction_tr[j - 1]])
-                root = coh_degas.coh_solubility(Pm=self.P, h2o_guess=df_results["wH2O_melt"][index - 1],
+                
+                if self.open_p == 0:
+
+                    root = coh_degas.coh_solubility(Pm=self.P, h2o_guess=df_results["wH2O_melt"][index - 1],
                                                 co2_0=self.CO2_0,
                                                 h2o_0=self.H2O_0, XS_fluid=XSO2_f_initial + XH2S_f_initial,
                                                 rS_fluid=rs_f_tr[j - 1], u0=initial_guess, choice=self.xlt_choice)
+                else:
+                    if df_results["pressure"][index] > self.open_p:
+                        root = coh_degas.coh_solubility(Pm=self.P, h2o_guess=df_results["wH2O_melt"][index - 1],
+                                                co2_0=self.CO2_0,
+                                                h2o_0=self.H2O_0, XS_fluid=XSO2_f_initial + XH2S_f_initial,
+                                                rS_fluid=rs_f_tr[j - 1], u0=initial_guess, choice=self.xlt_choice)
+                    else:
+                        root = coh_degas.coh_solubility(Pm=df_results["pressure"][index],
+                                            h2o_guess=df_results["wH2O_melt"][index - 1], co2_0=df_results["wCO2_melt"][index - 1],
+                                            h2o_0=df_results["wH2O_melt"][index - 1], XS_fluid=XSO2_f_initial + XH2S_f_initial,
+                                            rS_fluid=rs_f_tr[j - 1], u0=initial_guess, choice=self.xlt_choice)
+
 
                 if root.x[6] <= 0:
                     crystal_fraction_tr[j] = 0
@@ -158,9 +174,22 @@ class COHS_degassing:
                 initial_guess = np.array(
                     [melt_fraction_tr[j - 1], vapor_fraction_tr[j - 1], XH2O_f_initial, XCO2_f_initial,
                      wH2O_m_tr[j - 1], wCO2_m_tr[j - 1]])
-                root = coh_degas.coh_solubility(Pm=self.P, h2o_guess=df_results["wH2O_melt"][index - 1],
+                
+                if self.open_p == 0:
+                    root = coh_degas.coh_solubility(Pm=self.P, h2o_guess=df_results["wH2O_melt"][index - 1],
                                                 co2_0=self.CO2_0,
                                                 h2o_0=self.H2O_0, XS_fluid=XSO2_f_initial + XH2S_f_initial,
+                                                rS_fluid=rs_f_tr[j - 1], u0=initial_guess, choice=self.xlt_choice)
+                else:
+                    if df_results["pressure"][index] > self.open_p:
+                        root = coh_degas.coh_solubility(Pm=self.P, h2o_guess=df_results["wH2O_melt"][index - 1],
+                                                co2_0=self.CO2_0,
+                                                h2o_0=self.H2O_0, XS_fluid=XSO2_f_initial + XH2S_f_initial,
+                                                rS_fluid=rs_f_tr[j - 1], u0=initial_guess, choice=self.xlt_choice)
+                    else:
+                        root = coh_degas.coh_solubility(Pm=self.P, h2o_guess=df_results["wH2O_melt"][index - 1],
+                                                co2_0=df_results["wCO2_melt"][index - 1],
+                                                h2o_0=df_results["wH2O_melt"][index - 1], XS_fluid=XSO2_f_initial + XH2S_f_initial,
                                                 rS_fluid=rs_f_tr[j - 1], u0=initial_guess, choice=self.xlt_choice)
                 crystal_fraction_tr[j] = 0
                 if root.x[1] <= 0:
@@ -206,7 +235,16 @@ class COHS_degassing:
                 DS_wt = kdS_wt * vapor_fraction_tr[j] / (vapor_fraction_tr[j] + crystal_fraction_tr[j])
             else:
                 DS_wt = kdS_wt
-            wtS_m = self.S_0 / (fm * (1 - DS_wt) + DS_wt)
+            
+            if self.open_p==0:
+                wtS_m = self.S_0 / (fm * (1 - DS_wt) + DS_wt)
+            
+            else:
+                if df_results["pressure"][index] > self.open_p:
+                    wtS_m = self.S_0 / (fm * (1 - DS_wt) + DS_wt)
+                else:
+                    wtS_m = df_results["wS_melt"][index - 1]  / (fm * (1 - DS_wt) + DS_wt)
+            wS_m_tr[j] = wtS_m
             XS_m_tr[j] = (wtS_m / (10000 * 32.065)) / (
                     re_update.ntot + wtS_m / (10000 * 32.065) + 2 * wtH2O_m / 18.015 + wtCO2_m / (10000 * 44.01))
             XS6_m_tr[j] = XS_m_tr[j] * rs_m_tr[j - 1]
@@ -218,6 +256,8 @@ class COHS_degassing:
             ## Initial guess of S6+/ST, SO2/ST, Fe3+/FeT and fO2 are from previous iteration.
             low_l = 0.0001
             up_l = 0.9999
+
+
 
             if low_l < rs_m_tr[j - 1] < up_l:
                 if low_l < rs_f_tr[j - 1] < up_l:
@@ -361,9 +401,9 @@ class COHS_degassing:
 
             kd1_tr[j] = re_update.kd_rxn1(xh2o=XH2O_fluid_tr[j])
             kd2_tr[j] = re_update.kd_rxn2(fo2=fo2_tr[j])
-            kd1a_tr[j] = re_update.kd_rxn1a(fo2=fo2_tr[j])
+            # kd1a_tr[j] = re_update.kd_rxn1a(fo2=fo2_tr[j])
             if self.P >= BAR:
-                kd_combined_n = (kd1_tr[j] * (1 - rs_f_n) + kd1a_tr[j] * rs_f_n) * (1 - rs_m_n) + kd2_tr[j] * rs_m_n
+                kd_combined_n = (kd1_tr[j]) * (1 - rs_m_n) + kd2_tr[j] * rs_m_n
             else:
                 kd_combined_n = df_results["kd_combined_molar"][index - 1] + INC
             kd_combined_tr[j] = kd_combined_n
@@ -380,19 +420,27 @@ class COHS_degassing:
                 DS_wt = kdS_wt * vapor_fraction_tr[j] / (vapor_fraction_tr[j] + crystal_fraction_tr[j])
             else:
                 DS_wt = kdS_wt
-            wtS_m = self.S_0 / (melt_fraction_tr[j] * (1 - DS_wt) + DS_wt)
+            if self.open_p == 0:
+                wtS_m = self.S_0 / (melt_fraction_tr[j] * (1 - DS_wt) + DS_wt)
+            
+            else:
+                if df_results["pressure"][index] > self.open_p:
+                    wtS_m = self.S_0 / (melt_fraction_tr[j] * (1 - DS_wt) + DS_wt)
+                else:
+                    wtS_m = df_results["wS_melt"][index - 1] / (melt_fraction_tr[j] * (1 - DS_wt) + DS_wt)
+            
             wS_m_tr[j] = wtS_m
             XS_m_tr[j] = (wtS_m / (10000 * 32.065)) / (
                     re_update.ntot + wtS_m / (10000 * 32.065) + 2 * wtH2O_m / 18.015 + wtCO2_m / (10000 * 44.01))
             XS6_m_tr[j] = XS_m_tr[j] * rs_m_tr[j]
             XS2_m_tr[j] = XS_m_tr[j] * (1 - rs_m_tr[j])
-            if j > 30:
-                print(j)
+            # if j > 30:
+            #     print(j)
 
             # if abs(XS_m_tr[j]-XS_m_tr[j-1]) < 0.0001:
             if abs(np.log10(fo2_tr[j]) - np.log10(fo2_tr[j - 1])) < sigma:
                 df_results.iloc[index, df_results.columns.get_loc("kd_RxnI")] = kd1_tr[j]
-                df_results.iloc[index, df_results.columns.get_loc("kd_RxnIa")] = kd1a_tr[j]
+                # df_results.iloc[index, df_results.columns.get_loc("kd_RxnIa")] = kd1a_tr[j]
                 df_results.iloc[index, df_results.columns.get_loc("kd_RxnII")] = kd2_tr[j]
                 df_results.iloc[index, df_results.columns.get_loc("SO2/ST")] = rs_f_tr[j]
                 df_results.iloc[index, df_results.columns.get_loc("kd_combined_molar")] = kd_combined_tr[j]
@@ -428,7 +476,7 @@ class COHS_degassing:
                 break
             elif j == def_variables.n:
                 df_results.iloc[index, df_results.columns.get_loc("kd_RxnI")] = kd1_tr[j]
-                df_results.iloc[index, df_results.columns.get_loc("kd_RxnIa")] = kd1a_tr[j]
+                # df_results.iloc[index, df_results.columns.get_loc("kd_RxnIa")] = kd1a_tr[j]
                 df_results.iloc[index, df_results.columns.get_loc("kd_RxnII")] = kd2_tr[j]
                 df_results.iloc[index, df_results.columns.get_loc("SO2/ST")] = rs_f_tr[j]
                 df_results.iloc[index, df_results.columns.get_loc("kd_combined_molar")] = kd_combined_tr[j]
@@ -479,14 +527,68 @@ class COHS_degassing:
                                        (1 - df_results["ferric_ratio"][index]) / (55.845 + 15.999)
         df_results.iloc[index, df_results.columns.get_loc("ferric_cr")] = df_results["ferric_cr"][index - 1] + Fe3_cr
         df_results.iloc[index, df_results.columns.get_loc("ferrous_cr")] = df_results["ferrous_cr"][index - 1] + Fe2_cr
-        df_results.iloc[index, df_results.columns.get_loc("electron_balance")] = df_results["sulfide_m"][index] * 8 + df_results["H2S_f"][index] * 8 \
-                                                + 2 * df_results["SO2_f"][index] + df_results["ferrous"][index] + \
-                                                df_results["ferrous_cr"][index]
+        
+        
         df_results.iloc[index, df_results.columns.get_loc("SCSS")] = solubility.SCSS_smythe()
         df_results.iloc[index, df_results.columns.get_loc("SCAS")] = solubility.SCAS_Zajacz_Tsay()
         df_results.iloc[index, df_results.columns.get_loc("fH2")] = re_new.hydrogen_equilibrium(fo2=10 ** df_results["fO2"][index],
                                                                fh2o=df_results["water_fugacity"][index])
-
+        
+        if self.open_p == 0:
+            df_results.iloc[index, df_results.columns.get_loc("electron_balance")] = df_results["electron_balance"][0]
+            df_results.iloc[index, df_results.columns.get_loc("accmelt_fraction")]= df_results["melt_fraction"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accvapor_fraction")] = df_results["vapor_fraction"][index]
+            df_results.iloc[index, df_results.columns.get_loc("acccrystal_fraction")] = df_results["crystal_fraction"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accXS_fluid")] = df_results["XS_fluid"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accXH2O_fluid")] = df_results["XH2O_fluid"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accXSO2_fluid")] = df_results["XSO2_fluid"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accXH2S_fluid")] = df_results["XH2S_fluid"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accXCO2_fluid")] = df_results["XCO2_fluid"][index]
+        
+        else:
+            if df_results["pressure"][index]>self.open_p:
+                df_results.iloc[index, df_results.columns.get_loc("electron_balance")] = df_results["electron_balance"][0]
+                df_results.iloc[index, df_results.columns.get_loc("accmelt_fraction")] = df_results["melt_fraction"][
+                    index]
+                df_results.iloc[index, df_results.columns.get_loc("accvapor_fraction")] = df_results["vapor_fraction"][
+                    index]
+                df_results.iloc[index, df_results.columns.get_loc("acccrystal_fraction")] = \
+                df_results["crystal_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXS_fluid")] = df_results["XS_fluid"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXH2O_fluid")] = df_results["XH2O_fluid"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXSO2_fluid")] = df_results["XSO2_fluid"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXH2S_fluid")] = df_results["XH2S_fluid"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXCO2_fluid")] = df_results["XCO2_fluid"][index]
+            else:
+                df_results.iloc[index, df_results.columns.get_loc("electron_balance")] = df_results["sulfide_m"][index] * 8 + df_results["H2S_f"][index] * 8 \
+                                                + 2 * df_results["SO2_f"][index] + df_results["ferrous"][index] + \
+                                                df_results["ferrous_cr"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accvapor_fraction")] = \
+                    df_results["melt_fraction"][index-1]*df_results["vapor_fraction"][index] + df_results["accvapor_fraction"][index-1]
+                df_results.iloc[index, df_results.columns.get_loc("acccrystal_fraction")] = \
+                    df_results["melt_fraction"][index - 1] * df_results["crystal_fraction"][index] + \
+                    df_results["acccrystal_fraction"][index - 1]
+                df_results.iloc[index, df_results.columns.get_loc("accmelt_fraction")] = 1- df_results["acccrystal_fraction"][index]-df_results["accvapor_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXH2O_fluid")] = \
+                    (df_results["XH2O_fluid"][index] * df_results["melt_fraction"][index-1]*df_results["vapor_fraction"][index]+
+                     df_results["accXH2O_fluid"][index-1]*df_results["accvapor_fraction"][index-1])/df_results["accvapor_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXH2S_fluid")] = \
+                    (df_results["XH2S_fluid"][index] * df_results["melt_fraction"][index - 1] *
+                     df_results["vapor_fraction"][index] +
+                     df_results["accXH2S_fluid"][index - 1] * df_results["accvapor_fraction"][index - 1]) / \
+                    df_results["accvapor_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXSO2_fluid")] = \
+                    (df_results["XSO2_fluid"][index] * df_results["melt_fraction"][index - 1] *
+                     df_results["vapor_fraction"][index] +
+                     df_results["accXSO2_fluid"][index - 1] * df_results["accvapor_fraction"][index - 1]) / \
+                    df_results["accvapor_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXCO2_fluid")] = \
+                    (df_results["XCO2_fluid"][index] * df_results["melt_fraction"][index - 1] *
+                     df_results["vapor_fraction"][index] +
+                     df_results["accXCO2_fluid"][index - 1] * df_results["accvapor_fraction"][index - 1]) / \
+                    df_results["accvapor_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXS_fluid")] = df_results["accXSO2_fluid"][index] + df_results["accXH2S_fluid"][index]
+        df_results.iloc[index, df_results.columns.get_loc("accCO2_S")] = df_results["accXCO2_fluid"][index]/df_results["accXS_fluid"][index]
         return df_results.iloc[index]
 
     def degassing_noredox(self, delta_FMQ, df_results, index):
@@ -522,7 +624,7 @@ class COHS_degassing:
         ## calculate three kds, SO2/ST in the vapor using the water fugacity from previous step, and fO2 from this pressure step.
         df_results.iloc[index, df_results.columns.get_loc("kd_RxnI")] = re.kd_rxn1(xh2o=df_results["XH2O_fluid"][index - 1])
         df_results.iloc[index, df_results.columns.get_loc("kd_RxnII")] = re.kd_rxn2(fo2=10 ** (df_results["fO2"][index]))
-        df_results.iloc[index, df_results.columns.get_loc("kd_RxnIa")] = re.kd_rxn1a(fo2=10 ** df_results["fO2"][index])
+        # df_results.iloc[index, df_results.columns.get_loc("kd_RxnIa")] = re.kd_rxn1a(fo2=10 ** df_results["fO2"][index])
         df_results.iloc[index, df_results.columns.get_loc("S6+/ST")] = rs_melt.sulfate
         df_results.iloc[index, df_results.columns.get_loc("SO2/ST")] = re.gas_quilibrium(fo2=10 ** df_results["fO2"][index],
                                                         fh2o=df_results["water_fugacity"][index - 1],
@@ -545,9 +647,27 @@ class COHS_degassing:
                  df_results["XH2O_fluid"][index - 1], df_results["XCO2_fluid"][index - 1],
                  df_results["wH2O_melt"][index - 1],
                  df_results["wCO2_melt"][index - 1], df_results["crystal_fraction"][index - 1]])
-            root = coh_degas.coh_solubility(Pm=df_results["pressure"][index],
-                                            h2o_guess=df_results["wH2O_melt"][index - 1], co2_0=self.CO2_0,
-                                            h2o_0=self.H2O_0, XS_fluid=df_results["XS_fluid"][index],
+            if self.open_p == 0:
+                root = coh_degas.coh_solubility(Pm=df_results["pressure"][index],
+                                                h2o_guess=df_results["wH2O_melt"][index - 1],
+                                                co2_0=self.CO2_0,
+                                                h2o_0=self.H2O_0,
+                                                XS_fluid=df_results["XS_fluid"][index],
+                                                rS_fluid=df_results["SO2/ST"][index],
+                                                u0=initial_guess, choice=self.xlt_choice)
+            else:
+                if df_results["pressure"][index] > self.open_p:
+                    root = coh_degas.coh_solubility(Pm=df_results["pressure"][index],
+                                                    h2o_guess=df_results["wH2O_melt"][index - 1],
+                                                    co2_0=self.CO2_0,
+                                                    h2o_0=self.H2O_0,
+                                                    XS_fluid=df_results["XS_fluid"][index],
+                                                    rS_fluid=df_results["SO2/ST"][index],
+                                                    u0=initial_guess, choice=self.xlt_choice)
+                else:
+                    root = coh_degas.coh_solubility(Pm=df_results["pressure"][index],
+                                            h2o_guess=df_results["wH2O_melt"][index - 1], co2_0=df_results["wCO2_melt"][index - 1],
+                                            h2o_0=df_results["wH2O_melt"][index - 1], XS_fluid=df_results["XS_fluid"][index],
                                             rS_fluid=df_results["SO2/ST"][index],
                                             u0=initial_guess, choice=self.xlt_choice)
 
@@ -567,10 +687,28 @@ class COHS_degassing:
                  df_results["XH2O_fluid"][index - 1], df_results["XCO2_fluid"][index - 1],
                  df_results["wH2O_melt"][index - 1],
                  df_results["wCO2_melt"][index - 1]])
-            root = coh_degas.coh_solubility(Pm=df_results["pressure"][index],
+            if self.open_p == 0:
+                root = coh_degas.coh_solubility(Pm=df_results["pressure"][index],
+                                                h2o_guess=df_results["wH2O_melt"][index - 1],
+                                                co2_0=self.CO2_0,
+                                                h2o_0=self.H2O_0,
+                                                XS_fluid=df_results["XS_fluid"][index],
+                                                rS_fluid=df_results["SO2/ST"][index],
+                                                u0=initial_guess, choice=self.xlt_choice)
+            else:
+                if df_results["pressure"][index] > self.open_p:
+                    root = coh_degas.coh_solubility(Pm=df_results["pressure"][index],
+                                                    h2o_guess=df_results["wH2O_melt"][index - 1],
+                                                    co2_0=self.CO2_0,
+                                                    h2o_0=self.H2O_0,
+                                                    XS_fluid=df_results["XS_fluid"][index],
+                                                    rS_fluid=df_results["SO2/ST"][index],
+                                                    u0=initial_guess, choice=self.xlt_choice)
+                else:
+                    root = coh_degas.coh_solubility(Pm=df_results["pressure"][index],
                                             h2o_guess=df_results["wH2O_melt"][index - 1],
-                                            co2_0=self.CO2_0,
-                                            h2o_0=self.H2O_0, XS_fluid=df_results["XS_fluid"][index],
+                                            co2_0=df_results["wCO2_melt"][index - 1],
+                                            h2o_0=df_results["wH2O_melt"][index - 1], XS_fluid=df_results["XS_fluid"][index],
                                             rS_fluid=df_results["SO2/ST"][index],
                                             u0=initial_guess, choice=self.xlt_choice)
             if root.x[1] <= 0:
@@ -617,7 +755,15 @@ class COHS_degassing:
         else:
             df_results.iloc[index, df_results.columns.get_loc("DS_bulk")] = df_results["kd_combined_wt"][index]
 
-        df_results.iloc[index, df_results.columns.get_loc("wS_melt")] = self.S_0 / (
+        if self.open_p==0:
+            df_results.iloc[index, df_results.columns.get_loc("wS_melt")] = self.S_0 / (
+                    fm * (1 - df_results["DS_bulk"][index]) + df_results["DS_bulk"][index])
+        else:
+            if df_results["pressure"][index] > self.open_p:
+                df_results.iloc[index, df_results.columns.get_loc("wS_melt")] = self.S_0 / (
+                        fm * (1 - df_results["DS_bulk"][index]) + df_results["DS_bulk"][index])
+            else:
+                df_results.iloc[index, df_results.columns.get_loc("wS_melt")] = df_results["wS_melt"][index - 1] / (
                 fm * (1 - df_results["DS_bulk"][index]) + df_results["DS_bulk"][index])
         df_results.iloc[index, df_results.columns.get_loc("XS_melt")] = (df_results["wS_melt"][index] / (10000 * 32.065)) / \
                                        (re_update.ntot + df_results["wS_melt"][index] / (10000 * 32.065) +
@@ -672,5 +818,53 @@ class COHS_degassing:
         df_results.iloc[index, df_results.columns.get_loc("fH2")] = re_new.hydrogen_equilibrium(
             fo2=10 ** df_results["fO2"][index],
             fh2o=df_results["water_fugacity"][index])
-
+        if self.open_p == 0:
+            df_results.iloc[index, df_results.columns.get_loc("accmelt_fraction")]= df_results["melt_fraction"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accvapor_fraction")] = df_results["vapor_fraction"][index]
+            df_results.iloc[index, df_results.columns.get_loc("acccrystal_fraction")] = df_results["crystal_fraction"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accXS_fluid")] = df_results["XS_fluid"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accXH2O_fluid")] = df_results["XH2O_fluid"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accXSO2_fluid")] = df_results["XSO2_fluid"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accXH2S_fluid")] = df_results["XH2S_fluid"][index]
+            df_results.iloc[index, df_results.columns.get_loc("accXCO2_fluid")] = df_results["XCO2_fluid"][index]
+        else:
+            if df_results["pressure"][index]>self.open_p:
+                df_results.iloc[index, df_results.columns.get_loc("accmelt_fraction")] = df_results["melt_fraction"][
+                    index]
+                df_results.iloc[index, df_results.columns.get_loc("accvapor_fraction")] = df_results["vapor_fraction"][
+                    index]
+                df_results.iloc[index, df_results.columns.get_loc("acccrystal_fraction")] = \
+                df_results["crystal_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXS_fluid")] = df_results["XS_fluid"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXH2O_fluid")] = df_results["XH2O_fluid"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXSO2_fluid")] = df_results["XSO2_fluid"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXH2S_fluid")] = df_results["XH2S_fluid"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXCO2_fluid")] = df_results["XCO2_fluid"][index]
+            else:
+                df_results.iloc[index, df_results.columns.get_loc("accvapor_fraction")] = \
+                    df_results["melt_fraction"][index-1]*df_results["vapor_fraction"][index] + df_results["accvapor_fraction"][index-1]
+                df_results.iloc[index, df_results.columns.get_loc("acccrystal_fraction")] = \
+                    df_results["melt_fraction"][index - 1] * df_results["crystal_fraction"][index] + \
+                    df_results["acccrystal_fraction"][index - 1]
+                df_results.iloc[index, df_results.columns.get_loc("accmelt_fraction")] = 1- df_results["acccrystal_fraction"][index]-df_results["accvapor_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXH2O_fluid")] = \
+                    (df_results["XH2O_fluid"][index] * df_results["melt_fraction"][index-1]*df_results["vapor_fraction"][index]+
+                     df_results["accXH2O_fluid"][index-1]*df_results["accvapor_fraction"][index-1])/df_results["accvapor_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXH2S_fluid")] = \
+                    (df_results["XH2S_fluid"][index] * df_results["melt_fraction"][index - 1] *
+                     df_results["vapor_fraction"][index] +
+                     df_results["accXH2S_fluid"][index - 1] * df_results["accvapor_fraction"][index - 1]) / \
+                    df_results["accvapor_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXSO2_fluid")] = \
+                    (df_results["XSO2_fluid"][index] * df_results["melt_fraction"][index - 1] *
+                     df_results["vapor_fraction"][index] +
+                     df_results["accXSO2_fluid"][index - 1] * df_results["accvapor_fraction"][index - 1]) / \
+                    df_results["accvapor_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXCO2_fluid")] = \
+                    (df_results["XCO2_fluid"][index] * df_results["melt_fraction"][index - 1] *
+                     df_results["vapor_fraction"][index] +
+                     df_results["accXCO2_fluid"][index - 1] * df_results["accvapor_fraction"][index - 1]) / \
+                    df_results["accvapor_fraction"][index]
+                df_results.iloc[index, df_results.columns.get_loc("accXS_fluid")] = df_results["accXSO2_fluid"][index] + df_results["accXH2S_fluid"][index]
+        df_results.iloc[index, df_results.columns.get_loc("accCO2_S")] = df_results["accXCO2_fluid"][index]/df_results["accXS_fluid"][index]
         return df_results.iloc[index]

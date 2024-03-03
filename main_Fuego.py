@@ -12,24 +12,6 @@ from degassingrun import COHS_degassing
 from S_Fe import Sulfur_Iron
 from SCSS_model import Sulfur_Saturation
 
-# composition = {"SiO2": 50.42,
-#                "Al2O3": 15.13,
-#                "TiO2": 1.53,
-#                "FeOT": 9.81,
-#                "MgO": 7.76,
-#                "CaO": 11.35,
-#                "Na2O": 2.83,
-#                "K2O": 0.14,
-#                "P2O5": 0,
-#                "MnO": 0,
-#                }
-
-# T = 1400
-# P = 1000
-# solubility = Sulfur_Saturation(P=P, T=T, sulfide_composition=sulfide, composition=composition, h2o=3.5, ferric_fe=0)
-# scss = solubility.SCSS_smythe()
-# scas = solubility.SCAS_Zajacz_Tsay()
-# print(scss, scas)
 
 
 # OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
@@ -43,16 +25,16 @@ from SCSS_model import Sulfur_Saturation
 # Basic input
 ###############################################################################
 # Input of all the initial conditions
-temperature = 1030  # temperature in C
+temperature = 1100  # temperature in C
 # fO2 relative to FMQ buffer; if redox evolution is enabled, this is the initial fO2 at the initial P and T; if redox
 # evolution is disabled, the degassing would be buffered at this delta_FMQ
 delta_FMQ = 1.2
 # initial H2O in wt.%
-H2O_initial = 4.5
+H2O_initial = 2.5
 # initial CO2 in ppm
-CO2_initial = 3300
+CO2_initial = 4500
 # initial S in ppm
-S_initial = 2650
+S_initial = 3500
 # Crystallization or not? If 1, crystallization is enabled; if 0, crystallization disabled
 choice = 1
 # Which COH degassing model to use? 1 for VolatileCalc; 0 for Iacono_Marziano model
@@ -83,6 +65,8 @@ sulfide = {"Fe": 65.43,
             "O": 0,
             "S": 36.47
             }
+# degassing style: if 0, fully closed degassing; if x, degassing become open when pressure is lower than xMPa
+open_degassing = 0
 ###############################################################################
 # Advanced parameters
 # Please change the following parameters with caution and notify and justify
@@ -90,11 +74,10 @@ sulfide = {"Fe": 65.43,
 ###############################################################################
 # Which S speciation model to use? 0 for Nash model; 1 for O'Neill and Mavrogenes (2022) model; 100 for Muth model;
 # any other float number would be the modified version; the input is the last constant in the modified Muth model
-S_Fe_choice = 0
-
+S_Fe_choice = 100
 # log10fO2 tolerance. The value of this number may cause individual outliners in the fO2 calcuation. However, if sigma
 # is too small, it may cause the fault fO2 calculation
-sigma = 0.005
+sigma = 0.025
 
 # if crystallization is enabled, H2O-melt fraction relation is specified using H2O-K2O relation (K2O = a * H2O +b),
 # assuming K2O is perfectly incompatible. The given a and b are based on H2O-K2O relation for Fuego magam from
@@ -129,7 +112,7 @@ output_name = f"Fuego_crystallization_{S_Fe_choice}.csv"
 melt_comp_initial = MeltComposition(melt_fraction=1, choice=choice)
 
 tk = float(temperature) + 273.15  # in kelvin
-carbonate_initial = CO2_initial * 60.009 / 44.01
+# carbonate_initial = CO2_initial * 60.009 / 44.01
 
 if COH_model == 1:  # if VolatileCalc is chosen
     VC_coh = VolatileCalc(TK=tk, sio2=melt_comp_initial.composition["SiO2"], a=slope_h2o, b=constant_h2o)
@@ -141,7 +124,7 @@ if COH_model == 1:  # if VolatileCalc is chosen
 else:  # if IaconoMarziano model is chosen
     coh = IaconoMarziano(pressure=400, temperature_k=tk, composition=melt_comp_initial.composition,
                          a=slope_h2o, b=constant_h2o)
-    [P_initial, XH2Of_initial] = coh.saturation_pressure(carbonate_initial, H2O_initial)  # P_initial in bar
+    [P_initial, XH2Of_initial] = coh.saturation_pressure(CO2_initial, H2O_initial)  # P_initial in bar
     print(
         f" The initial vapor saturation pressure is {P_initial} bar, and the initial vapor concentration is XH2O = {XH2Of_initial}"
         f" and XCO2 = {1 - XH2Of_initial}.")
@@ -222,9 +205,9 @@ df_results_m = df_results
 for i in range(1, m):
     degas = COHS_degassing(pressure=df_results["pressure"][i], temperature=temperature, COH_model=COH_model,
                            xlt_choice=choice, S_Fe_choice=S_Fe_choice, H2O_initial=H2O_initial, CO2_initial=CO2_initial,
-                           S_initial=S_initial, a=slope_h2o, b=constant_h2o, monte_c=0)
+                           S_initial=S_initial, a=slope_h2o, b=constant_h2o, monte_c=0, op=open_degassing)
     if fo2_tracker == 1:
-        df_results.iloc[i] = degas.degassing_redox(df_results=df_results, index=i, e_balance_initial=e_balance_initial,
+        df_results.iloc[i] = degas.degassing_redox(df_results=df_results, index=i, e_balance_initial=df_results["electron_balance"][i-1],
                                                    sigma=sigma)
     else:
         df_results.iloc[i] = degas.degassing_noredox(df_results=df_results, index=i, delta_FMQ=delta_FMQ)
@@ -245,7 +228,7 @@ plt.plot(df_results["wS_melt"][0:m], df_results["pressure"][0:m], linestyle="-",
          color="blue")
 plt.xlabel("S_melt (ppm)")
 plt.ylabel("Pressure (MPa)")
-plt.xlim([0,3000])
+# plt.xlim([0,3000])
 plt.ylim([0, 600])
 plt.subplot(1,2,2)
 plt.plot(df_results["fO2"][13:m] - df_results["FMQ"][13:m], df_results["pressure"][13:m], linestyle="-", linewidth=5,
@@ -394,29 +377,39 @@ plt.ylabel("Pressure (MPa)")
 ##############################################################################
 # Monte-Carlo Simulation
 ##############################################################################
-# df_S_m = df_results[["pressure"]].copy()
-# print("Montecarlo simulation")
-# if monte_carlo == 1:
-#     for k in range(0, m_run):
-#         for i in range(1, m):
-#             degas = COHS_degassing(pressure=df_results_m["pressure"][i], temperature=temperature, COH_model=COH_model,
-#                                    xlt_choice=choice, S_Fe_choice=S_Fe_choice, H2O_initial=H2O_initial,
-#                                    CO2_initial=CO2_initial,
-#                                    S_initial=S_initial, a=slope_h2o, b=constant_h2o, monte_c=1)
-#             if fo2_tracker == 1:
-#                 df_results_m.iloc[i] = degas.degassing_redox(df_results=df_results_m, index=i,
-#                                                              e_balance_initial=e_balance_initial,
-#                                                              sigma=sigma)
-#             else:
-#                 df_results_m.iloc[i] = degas.degassing_noredox(df_results=df_results_m, index=i, delta_FMQ=delta_FMQ)
-#         df_S_m.insert(k + 1, k, df_results_m["wS_melt"])
-# S_only = df_S_m.iloc[:, 1:m_run]
-# df_S_m.insert(m_run + 1, "mean", S_only.mean(1))
-# df_S_m.insert(m_run + 2, "std", S_only.std(1))
-# df_S_m.insert(m_run + 3, "variance", S_only.var(1))
-# df_S_m = pd.read_csv("multiple_simulation_S_1_6000.csv")
+df_S_m = df_results[["pressure"]].copy()
+df_C_S = df_results[["pressure"]].copy()
+print("Montecarlo simulation")
+if monte_carlo == 1:
+    for k in range(0, m_run):
+        for i in range(1, m):
+            degas = COHS_degassing(pressure=df_results_m["pressure"][i], temperature=temperature, COH_model=COH_model,
+                                   xlt_choice=choice, S_Fe_choice=S_Fe_choice, H2O_initial=H2O_initial,
+                                   CO2_initial=CO2_initial,
+                                   S_initial=S_initial, a=slope_h2o, b=constant_h2o, monte_c=1, op=open_degassing)
+            if fo2_tracker == 1:
+                df_results_m.iloc[i] = degas.degassing_redox(df_results=df_results_m, index=i,
+                                                             e_balance_initial=e_balance_initial,
+                                                             sigma=sigma)
+            else:
+                df_results_m.iloc[i] = degas.degassing_noredox(df_results=df_results_m, index=i, delta_FMQ=delta_FMQ)
+        df_S_m.insert(k + 1, k, df_results_m["wS_melt"])
+        df_C_S.insert(k + 1, k, df_results_m["XCO2_fluid"]/df_results_m["XS_fluid"])
+S_only = df_S_m.iloc[:, 1:m_run]
+df_S_m.insert(m_run + 1, "mean", S_only.mean(1))
+df_S_m.insert(m_run + 2, "std", S_only.std(1))
+df_S_m.insert(m_run + 3, "variance", S_only.var(1))
+df_S_m.to_csv("mc_S_fo2.csv")
+CS_only = df_C_S.iloc[:, 1:m_run]
+df_C_S.insert(m_run + 1, "mean", CS_only.mean(1))
+df_C_S.insert(m_run + 2, "std", CS_only.std(1))
+df_C_S.insert(m_run + 3, "variance", CS_only.var(1))
+df_C_S.to_csv("mc_CS_fo2.csv")
+# m_run = 500
+# df_S_m = pd.read_csv("mc_S.csv")
+# df_CS_m = pd.read_csv("mc_CS.csv")
 # print(df_S_m.iloc[:, 1])
-plt.figure(84)
+plt.figure(84,figsize=(8,6))
 plt.subplot(1, 2, 1)
 plt.plot(df_results["wS_melt"][0:m], df_results["wCO2_melt"][0:m])
 # for i in range(1, m_run):
@@ -425,7 +418,7 @@ plt.plot(df_results["wS_melt"][0:m], df_results["wCO2_melt"][0:m])
 plt.legend(["Sulfur_X", " MI"])
 plt.xlabel("S_melt (ppm)")
 plt.ylabel("CO2_melt (ppm)")
-plt.xlim([0,3000])
+# plt.xlim([0,3000])
 plt.ylim([0, 6000])
 plt.subplot(1, 2, 2)
 plt.plot(df_results["wS_melt"][0:m], df_results["wH2O_melt"][0:m])
@@ -435,7 +428,7 @@ plt.plot(df_results["wS_melt"][0:m], df_results["wH2O_melt"][0:m])
 # plt.legend(["Sulfur_X", " MI"])
 plt.xlabel("S_melt (ppm)")
 plt.ylabel("H2O_melt (wt.%)")
-plt.xlim([0, 3000])
+# plt.xlim([0, 3000])
 plt.ylim([0, 5])
 plt.show()
-# df_S_m.to_csv(monte_name)
+

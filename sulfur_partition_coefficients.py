@@ -97,9 +97,9 @@ class PartitionCoefficient:
                         - (delh_rxn1)*(1/self.Tkc - 1/(T0_RXNI+273.15)) + np.log(self.Pb * phih2o) \
                         - np.log(self.xfe) - self.ln_feo_coefficient - np.log(self.Pb * phih2s)
         # residual_Rxn1 = ln(xh2s) -ln(xS2-) + ln(XH2O_fluid)
-        self.residual_rxn1a = 29.79217 + self.ln_S_coefficient - DELV_RXNI*(self.Pb/10 - P0_RXNIA)/(R * self.Tkc) \
-                              - (delh_rxn1a) * (1/self.Tkc - 1/(T0_RXNIA+273.15)) - np.log(self.Pb) - np.log(phiso2) \
-                              - np.log(self.xfe) - self.ln_feo_coefficient
+        # self.residual_rxn1a = 29.79217 + self.ln_S_coefficient - DELV_RXNI*(self.Pb/10 - P0_RXNIA)/(R * self.Tkc) \
+        #                       - (delh_rxn1a) * (1/self.Tkc - 1/(T0_RXNIA+273.15)) - np.log(self.Pb) - np.log(phiso2) \
+        #                       - np.log(self.xfe) - self.ln_feo_coefficient
         # residual_Rxn1a = ln(so2) -ln(xS2-) - 1.5* lnfO2
         # self.residual_rxn2 = -0.2394 - DELV_RXNII*(self.Pb/10 - P0_RXNII)/(R * self.Tkc) \
         #                      - DELH_RXNII*(1/self.Tkc - 1/T0_RXNII) - np.log(phiso2) - np.log(self.Pb)\
@@ -114,7 +114,7 @@ class PartitionCoefficient:
 
     def get_truncated_normal(mean, sd, low, upp):
         return truncnorm((low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
-
+    #This function calculates the kd between H2S in the vapor and S2- in the melt
     def kd_rxn1(self, xh2o):
         """
         xh2o: mole fraction of h2o in the vapor, 0-1
@@ -125,16 +125,17 @@ class PartitionCoefficient:
             rxn1 = np.random.normal(rxn1, sd_rxn1)
         return np.exp(rxn1)
 
-    def kd_rxn1a(self, fo2):
-        """
-        fo2: oxygen fugacity in bar
-        """
-        rxn1a = self.residual_rxn1a + 1.5 * np.log(fo2)
-        sd_rxn1a = 0.45
-        if self.monte == 1:
-            rxn1a = np.random.normal(rxn1a, sd_rxn1a)
-        return np.exp(rxn1a)
+    # def kd_rxn1a(self, fo2):
+    #     """
+    #     fo2: oxygen fugacity in bar
+    #     """
+    #     rxn1a = self.residual_rxn1a + 1.5 * np.log(fo2)
+    #     sd_rxn1a = 0.45
+    #     if self.monte == 1:
+    #         rxn1a = np.random.normal(rxn1a, sd_rxn1a)
+    #     return np.exp(rxn1a)
 
+    # This function calculates the kd between SO2 in the vapor and S6+ in the melt
     def kd_rxn2 (self, fo2):
         """
         fo2: oxygen fugacity in bar
@@ -145,6 +146,7 @@ class PartitionCoefficient:
             rxn2 = np.random.normal(rxn2, sd_rxn2)
         return np.exp(rxn2)
 
+    # This function calculates the SO2 and H2S in the vapor
     def gas_quilibrium(self, fo2, fh2o, phiso2, phih2s):
         """
         fo2: oxygen fugacity in bar
