@@ -101,7 +101,7 @@ class IaconoMarziano:
         NBO = 2 * (xh2o + xk2o + xna2o + xcao + xmgo + xfeo - xal2o3) / \
               (2 * xsio2 + 2 * xtio2 + 3 * xal2o3 + xmgo + xfeo + xcao + xna2o + xk2o + xh2o)
 
-        u0 = np.array([self.Pb, 0.9])
+        u0 = np.array([self.Pb, 0.01])
         u = root(self.func_initial, u0, (h2o_0, co2_0, AI, xfeo + xmgo, xna2o + xk2o, NBO, self.ntot, self.Tkc))
         pressure_sat = u.x[0]
         XH2O_f = u.x[1]
@@ -112,10 +112,9 @@ class IaconoMarziano:
         XH2O_f = u[1]
         eq_H2O = (P_sat ** alpha_H2O) * (XH2O_f ** alpha_H2O) * np.exp(
             beta_H2O * NBO + b_H2O + c_H2O * P_sat / T) - h2o_0
-        eq_CO2 = (d_H2O * h2o_0 / (15.999 + 2 * 1.0079) / (anhy_ntot + h2o_0 / (15.999 + 2 * 1.0079))
-                  + d_ACNK * x_ai + d_FE_MG * x_feomgo + d_NA_K * x_na2ok2o) \
-                 + alpha_CO2 * np.log(P_sat * (1 - XH2O_f)) + beta_CO2 * NBO + b_CO2 + c_CO2 * P_sat / T - np.log(
-            co2_0)
+        eq_CO2 = np.exp(d_H2O * (h2o_0 / (15.999 + 2 * 1.0079) )/ (anhy_ntot + h2o_0 / (15.999 + 2 * 1.0079))
+                  + d_ACNK * x_ai + d_FE_MG * x_feomgo + d_NA_K * x_na2ok2o+ beta_CO2 * NBO + b_CO2 + c_CO2 * P_sat / T) \
+                 * (P_sat**alpha_CO2) * (1 - XH2O_f)**alpha_CO2  - co2_0
         F = np.array([eq_H2O, eq_CO2])
         return F
 
@@ -138,14 +137,19 @@ class IaconoMarziano:
               (2 * xsio2 + 2 * xtio2 + 3 * xal2o3 + xmgo + xfeo + xcao + xna2o + xk2o + xh2o)
 
         if choice == 1:
-            u = root(self.func_crystalization, u0, (h2o_0, co2_0, AI, xfeo + xmgo, xna2o + xk2o, NBO, self.ntot, self.Tkc,
+            solution = root(self.func_crystalization, u0, (h2o_0, co2_0, AI, xfeo + xmgo, xna2o + xk2o, NBO, self.ntot, self.Tkc,
                                  self.Pb, XS_fluid, rS_fluid))
 
         else:
 
-            u = root(self.func_no_crystallization, u0, (h2o_0, co2_0, AI, xfeo + xmgo, xna2o + xk2o, NBO, self.ntot, self.Tkc,
-                               self.Pb, XS_fluid, rS_fluid))
-        return u
+            solution = root(self.func_no_crystallization, u0, args=(h2o_0, co2_0, AI, xfeo + xmgo, xna2o + xk2o, NBO, self.ntot, self.Tkc,
+                               self.Pb, XS_fluid, rS_fluid), method='hybr', tol=1e-5)
+        # if solution.success:
+            
+        #     print("Solution found:")
+        # else:
+        #     print("Solution not found. Error message:", solution.message)
+        return solution
 
     def func_crystalization (self, u, h2o_0, co2_0, x_ai, x_feomgo, x_na2ok2o, NBO, anhy_ntot, T, P, XS_fluid, rS_fluid):
         fm = u[0]
@@ -161,7 +165,7 @@ class IaconoMarziano:
                   + d_ACNK * x_ai + d_FE_MG * x_feomgo + d_NA_K * x_na2ok2o) \
                  + alpha_CO2 * np.log(P * XCO2_f) + beta_CO2 * NBO + b_CO2 + c_CO2 * P / T - np.log(CO2_m)
         eq_totalP = XH2O_f + XCO2_f + XS_fluid - 1
-        mb_h2o = fm * H2O_m + fv * 100 * XH2O_f * 18.015 / (XH2O_f * 18.015 + XCO2_f * 44.01 +
+        mb_h2o = fm * H2O_m + fv * 100* XH2O_f * 18.015 / (XH2O_f * 18.015 + XCO2_f * 44.01 +
                                                             XS_fluid * rS_fluid * 64 + XS_fluid * (
                                                                         1 - rS_fluid) * 34) - h2o_0
         mb_co2 = fm * CO2_m + fv * 1000000 * XCO2_f * 44.01 / (XH2O_f * 18.015 + XCO2_f * 44.01 +
@@ -181,15 +185,15 @@ class IaconoMarziano:
         H2O_m = u[4]
         CO2_m = u[5]
 
-        eq_H2O = (np.log(P * XH2O_f) * alpha_H2O) + (beta_H2O * NBO + b_H2O + c_H2O * P / T) - np.log(H2O_m)
+        eq_H2O = (P ** alpha_H2O) * (XH2O_f ** alpha_H2O) * np.exp(beta_H2O * NBO + b_H2O + c_H2O * P / T) - H2O_m
         eq_CO2 = (d_H2O * (H2O_m / (15.999 + 2 * 1.0079)) / (anhy_ntot + H2O_m / (15.999 + 2 * 1.0079))
                   + d_ACNK * x_ai + d_FE_MG * x_feomgo + d_NA_K * x_na2ok2o) \
                  + alpha_CO2 * np.log(P * XCO2_f) + beta_CO2 * NBO + b_CO2 + c_CO2 * P / T - np.log(CO2_m)
         eq_totalP = XH2O_f + XCO2_f + XS_fluid - 1
-        mb_h2o = fm * H2O_m + fv * 100 * XH2O_f * 18.015 / (XH2O_f * 18.015 + XCO2_f * 44.01 +
+        mb_h2o = fm * H2O_m + fv *100 * XH2O_f * 18.015 / (XH2O_f * 18.015 + XCO2_f * 44.01 +
                                                             XS_fluid * rS_fluid * 64 + XS_fluid * (
                                                                     1 - rS_fluid) * 34) - h2o_0
-        mb_co2 = fm * CO2_m + fv * 1000000 * XCO2_f * 44.01 / (XH2O_f * 18.015 + XCO2_f * 44.01 +
+        mb_co2 = fm * CO2_m + fv *1000000* XCO2_f * 44.01 / (XH2O_f * 18.015 + XCO2_f * 44.01 +
                                                                XS_fluid * rS_fluid * 64 + XS_fluid * (
                                                                        1 - rS_fluid) * 34) - co2_0
         eq_mb = fm + fv - 1

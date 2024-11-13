@@ -79,6 +79,8 @@ class Sulfur_Saturation:
         metal_total = xfe +xcu + xni
         # calculate the Fe activity in sulfide
         self.fe_total = xfe / metal_total
+        # S wt.% in sulfide
+        self.ws = sulfide_composition["S"]
 
     def SCSS_smythe(self):
         # mole fraction of oxides in the silicate melt on a single cation base
@@ -142,6 +144,17 @@ class Sulfur_Saturation:
         xs = ksp/xcao
         scas = xs*total_ox*32.07*10000 # in ppm
         return scas
+    
+    def SCSStotal(self, sulfate, scss, scas):
+        Stotal_SCSS = scss/(1-sulfate)
+        Stotal_SCAS = scas/sulfate
+        if Stotal_SCSS <= Stotal_SCAS:
+            Stotal = Stotal_SCSS
+        
+        else:
+            Stotal = Stotal_SCAS
+        
+        return Stotal
 
 
 

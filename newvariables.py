@@ -42,9 +42,10 @@ class NewVariables:
         melt_fraction_tr = [0.8] * self.n
         crystal_fraction_tr = [0.1] * self.n
         vapor_fraction_tr = [0.1] * self.n
+        sulfide_frac_tr = [0]*self.n
         return fo2_tr, XH2O_fluid_tr, XCO2_fluid_tr, XSO2_f_tr, XH2S_f_tr, XS_f_tr, ferric_ratio_tr, wS_f_tr, XS6_m_tr, \
                XS2_m_tr, XS_m_tr, wH2O_m_tr, wCO2_m_tr, wS_m_tr, kd1_tr, kd2_tr, kd1a_tr, kd_combined_tr, rs_m_tr, \
-               rs_f_tr, melt_fraction_tr, crystal_fraction_tr, vapor_fraction_tr
+               rs_f_tr, melt_fraction_tr, crystal_fraction_tr, vapor_fraction_tr, sulfide_frac_tr
 
     def results_dic(self):
         pressure = np.linspace(self.P / 10, 1, self.step)
@@ -103,6 +104,12 @@ class NewVariables:
                    "accvapor_fraction": empty_list,
                    "acccrystal_fraction": empty_list,
                    "accCO2_S": empty_list,
+                   "d34s_melt": empty_list,
+                   "d34s_fluid":empty_list,
+                   "accd34s_fluid":empty_list,
+                   "alpha": empty_list,
+                   "SCSS_S6+": empty_list,
+                   "sulfide_frac":empty_list,
                    }
         return my_data
 
