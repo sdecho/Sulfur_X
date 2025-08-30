@@ -96,14 +96,7 @@ class PartitionCoefficient:
         self.residual_rxn1 = 0.616843 + self.ln_S_coefficient - DELV_RXNI*(self.Pb/10 - P0_RXNI)/(R * self.Tkc) \
                         - (delh_rxn1)*(1/self.Tkc - 1/(T0_RXNI+273.15)) + np.log(self.Pb * phih2o) \
                         - np.log(self.xfe) - self.ln_feo_coefficient - np.log(self.Pb * phih2s)
-        # residual_Rxn1 = ln(xh2s) -ln(xS2-) + ln(XH2O_fluid)
-        # self.residual_rxn1a = 29.79217 + self.ln_S_coefficient - DELV_RXNI*(self.Pb/10 - P0_RXNIA)/(R * self.Tkc) \
-        #                       - (delh_rxn1a) * (1/self.Tkc - 1/(T0_RXNIA+273.15)) - np.log(self.Pb) - np.log(phiso2) \
-        #                       - np.log(self.xfe) - self.ln_feo_coefficient
-        # residual_Rxn1a = ln(so2) -ln(xS2-) - 1.5* lnfO2
-        # self.residual_rxn2 = -0.2394 - DELV_RXNII*(self.Pb/10 - P0_RXNII)/(R * self.Tkc) \
-        #                      - DELH_RXNII*(1/self.Tkc - 1/T0_RXNII) - np.log(phiso2) - np.log(self.Pb)\
-        #                      - 8.917 * self.excess_ca - 21.7845 * self.excess_na - 1.7147 * self.nbo
+       
         self.residual_rxn2 = -0.2556 - DELV_RXNII * (self.Pb / 10 - P0_RXNII) / (R * self.Tkc) \
                              - DELH_RXNII * (1 / self.Tkc - 1 / (T0_RXNII+273.15))- np.log(phiso2) - np.log(self.Pb) \
                              - 9.88817 * self.excess_ca - 24.76395 * self.excess_na - 0.97078 * self.nbo
@@ -125,15 +118,7 @@ class PartitionCoefficient:
             rxn1 = np.random.normal(rxn1, sd_rxn1)
         return np.exp(rxn1)
 
-    # def kd_rxn1a(self, fo2):
-    #     """
-    #     fo2: oxygen fugacity in bar
-    #     """
-    #     rxn1a = self.residual_rxn1a + 1.5 * np.log(fo2)
-    #     sd_rxn1a = 0.45
-    #     if self.monte == 1:
-    #         rxn1a = np.random.normal(rxn1a, sd_rxn1a)
-    #     return np.exp(rxn1a)
+  
 
     # This function calculates the kd between SO2 in the vapor and S6+ in the melt
     def kd_rxn2 (self, fo2):

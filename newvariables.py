@@ -7,7 +7,7 @@ class NewVariables:
     l: total pressure steps: int
     """
     def __init__(self, P_initial, l):
-        self.n = 1000
+        self.n = 100000
         self.P = P_initial
         self.step = l
 

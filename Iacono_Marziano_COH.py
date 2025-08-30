@@ -101,7 +101,7 @@ class IaconoMarziano:
         NBO = 2 * (xh2o + xk2o + xna2o + xcao + xmgo + xfeo - xal2o3) / \
               (2 * xsio2 + 2 * xtio2 + 3 * xal2o3 + xmgo + xfeo + xcao + xna2o + xk2o + xh2o)
 
-        u0 = np.array([self.Pb, 0.01])
+        u0 = np.array([self.Pb, 0.9])
         u = root(self.func_initial, u0, (h2o_0, co2_0, AI, xfeo + xmgo, xna2o + xk2o, NBO, self.ntot, self.Tkc))
         pressure_sat = u.x[0]
         XH2O_f = u.x[1]
