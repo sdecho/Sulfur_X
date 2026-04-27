@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Sulfur_X"
+version = "1.2.1"
+readme = "README.md"
+authors = [{name = "Shuo Ding"}]
+dependencies = [
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "scipy",
+    "tqdm",
+]
+
+[tool.setuptools]
+py-modules = [
+    "Iacono_Marziano_COH", "SCSS_model", "S_Fe", "VC_COH",
+    "degassingrun", "fuegodegassing", "fugacity", "main_Fuego",
+    "melt_composition", "newvariables", "oxygen_fugacity",
+    "s_isotope", "sulfur_fO2_degassing_test",
+    "sulfur_partition_coefficients",
+]
