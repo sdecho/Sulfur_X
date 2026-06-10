@@ -1,0 +1,20 @@
+parameter,value
+temperature_C,1220.0
+delta_FMQ,0.55
+H2O_initial_wt,0.3
+CO2_initial_ppm,800.0
+S_initial_ppm,1500.0
+d34s_m_initial,1.0
+crystallization_choice,0.0
+COH_model,0.0
+fo2_tracker,1.0
+monte_carlo,0.0
+total steps of pressure,300.0
+total numbers of runs,300.0
+Pressure (MPa) open degassings tarts,0.0
+S_Fe speciation model,6.5
+log10fO2 tolerence,0.025
+H2O-K2O slope for crystallization,-0.3396
+H2O constant for crystallization,2.7
+Run until in bar,0.0
+incremental kd,10.0

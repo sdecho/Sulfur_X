@@ -11,7 +11,7 @@ from S_Fe import Sulfur_Iron
 from SCSS_model import Sulfur_Saturation
 from s_isotope import isotope
 
-INC = 20
+INC = 10
 BAR = 0
 
 

@@ -14,31 +14,67 @@ class MeltComposition:
         if choice == 1:# Input melt composition change as a function of k2O here if crystallization is enabled.
              if melt_fraction > 0.16:
                 k2o = 0.5 / melt_fraction
-                sio2 = 0.7993 * k2o ** 2 + 1.3594 * k2o + 47.724
-                al2o3 = 0.1359 * k2o ** 2 -1.7216 * k2o+ 19.556
-                feot = -0.2452 * k2o + 8.3786
-                mgo = -0.4446 * k2o ** 2 + 1.1916 * k2o+ 4.2932
-                cao = 0.3869 * k2o ** 2 - 4.5494 * k2o + 15.852
-                na2o = 0.2359 * k2o ** 2 - 0.2212 * k2o + 3.4682
-                p2o5 = -0.0438 * k2o ** 2 + 0.2943 * k2o + 0.5277
-                mno = 0.14
-                tio2 = 3
+                sio2 = -1.9877 * k2o ** 2 +14.864 * k2o + 44.622
+                al2o3 = -0.8579 * k2o ** 2 +2.7875 * k2o+ 14.191
+                feot = 1.2447 * k2o**2-8.13*k2o + 15.65
+                mgo = 1.6993 * k2o ** 2 - 8.9497 * k2o+ 12.026
+                cao = 0.1883 * k2o ** 2 - 2.8933 * k2o + 8.8376
+                na2o = 5
+                p2o5 = -0.0124 * k2o ** 2 - 0.2644 * k2o + 0.7405
+                mno = 0.0718 * k2o ** 2-0.3772*k2o + 0.5545
+                tio2 = 0.1503 * k2o ** 2 - 0.8544 * k2o + 1.6476
              else:
                 melt_fraction = 0.16
                 k2o = 0.5 / melt_fraction
-                sio2 = 0.7993 * k2o ** 2 + 1.3594 * k2o + 47.724
-                al2o3 = 0.1359 * k2o ** 2 - 1.7216 * k2o + 19.556
-                feot = -0.2452 * k2o + 8.3786
-                mgo = -0.4446 * k2o ** 2 + 1.1916 * k2o + 4.2932
-                cao = 0.3869 * k2o ** 2 - 4.5494 * melt_fraction + 15.852
-                na2o = 0.2359 * k2o ** 2 - 0.2212 * k2o + 3.4682
-                p2o5 = -0.0438 * k2o ** 2 + 0.2943 * k2o + 0.5277
-                mno = 0.14
-                tio2 = 3
+                sio2 = -1.9877 * k2o ** 2 + 14.864 * k2o + 44.622
+                al2o3 = -0.8579 * k2o ** 2 + 2.7875 * k2o + 14.191
+                feot = 1.2447 * k2o ** 2 - 8.13 * k2o + 15.65
+                mgo = 1.6993 * k2o ** 2 - 8.9497 * k2o + 12.026
+                cao = 0.1883 * k2o ** 2 - 2.8933 * k2o + 8.8376
+                na2o = 5
+                p2o5 = -0.0124 * k2o ** 2 - 0.2644 * k2o + 0.7405
+                mno = 0.0718 * k2o ** 2 - 0.3772 * k2o + 0.5545
+                tio2 = 0.1503 * k2o ** 2 - 0.8544 * k2o + 1.6476
             
         else: # Input melt composition here if crystallization is disabled.
-            
-            sio2 = 51.46/ melt_fraction
+            # Fogo_comparison paper
+            # sio2 = 42.40 / melt_fraction
+            # al2o3 = 11.17 / melt_fraction
+            # feot = 12.00 / melt_fraction
+            # mgo = 9.55 / melt_fraction
+            # cao = 13.31 / melt_fraction
+            # na2o = 3.36 / melt_fraction
+            # k2o = 1.57 / melt_fraction
+            # p2o5 = 0.75 / melt_fraction
+            # mno = 0.14 / melt_fraction
+            # tio2 = 3.26 / melt_fraction
+
+            # Kilauea_comparison paper
+            # sio2 = 50.19 / melt_fraction
+            # al2o3 = 12.79 / melt_fraction
+            # feot = 11.34 / melt_fraction
+            # mgo = 9.23 / melt_fraction
+            # cao = 10.44 / melt_fraction
+            # na2o = 2.39 / melt_fraction
+            # k2o = 0.43 / melt_fraction
+            # p2o5 = 0.27 / melt_fraction
+            # mno = 0.18 / melt_fraction
+            # tio2 = 2.34 / melt_fraction
+
+            # MORB_comparison paper
+            # sio2 = 47.4 / melt_fraction
+            # al2o3 = 17.64 / melt_fraction
+            # feot = 7.98 / melt_fraction
+            # mgo = 7.63 / melt_fraction
+            # cao = 12.44 / melt_fraction
+            # na2o = 2.65 / melt_fraction
+            # k2o = 0.03 / melt_fraction
+            # p2o5 = 0.08 / melt_fraction
+            # mno = 0.00 / melt_fraction
+            # tio2 = 1.01 / melt_fraction
+
+            # Fuego_comparison paper
+            sio2 = 51.46 / melt_fraction
             al2o3 = 17.43 / melt_fraction
             feot = 9.42 / melt_fraction
             mgo = 3.78 / melt_fraction
@@ -48,6 +84,18 @@ class MeltComposition:
             p2o5 = 0.24 / melt_fraction
             mno = 0.19 / melt_fraction
             tio2 = 1.06 / melt_fraction
+
+            # Mt Spurr
+            # sio2 = 59.25/ melt_fraction
+            # al2o3 = 13.55 / melt_fraction
+            # feot = 6.38 / melt_fraction
+            # mgo = 3.63 / melt_fraction
+            # cao = 4.07 / melt_fraction
+            # na2o = 4 / melt_fraction
+            # k2o = 1.49 / melt_fraction
+            # p2o5 = 0.33 / melt_fraction
+            # mno = 0.18 / melt_fraction
+            # tio2 = 0.63 / melt_fraction
 
 
             
