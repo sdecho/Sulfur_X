@@ -30,16 +30,16 @@ from tqdm import tqdm
 ###############################################################################
 # Input of all the initial conditions
 # Melt compositions need to be changed in the melt_composition.py file
-temperature = 1030 # temperature in C
+temperature = 1170 # temperature in C
 # fO2 relative to FMQ buffer; if redox evolution is enabled, this is the initial fO2 at the initial P and T; if redox
 # evolution is disabled, the degassing would be buffered at this delta_FMQ
-delta_FMQ = 1.17
+delta_FMQ = 0.2
 # initial H2O in wt.%
-H2O_initial = 4.5
+H2O_initial = 0.5
 # initial CO2 in ppm
-CO2_initial = 3300
+CO2_initial = 1405
 # initial S in ppm
-S_initial = 2650
+S_initial = 976
 # initial d34s in the melt
 d34s_m_initial = 1
 # Crystallization or not? If 1, crystallization is enabled; if 0, crystallization disabled
@@ -61,9 +61,9 @@ else:
 # name of the output file of monte_carlo simulations.
 monte_name = "multiple_simulation_S.csv"
 # The total steps of pressure from initial P to 1 bar. Please make sure the pressure step is small enough.
-l = 600
+l =1000
 # total numbers of runs along degassing. This decides if the degassing model run till 1bar or not.
-m = 600
+m = 1000
 # sulfide composition (in wt.%), only relevant if SCSS is of interest;
 # please change both here and in the degassingrun.py file
 sulfide = {"Fe": 65.43,
@@ -83,7 +83,7 @@ sulfide_pre = 0
 ###############################################################################
 # Which S speciation model to use? 0 for Nash model; 1 for O'Neill and Mavrogenes (2022) model; 100 for Muth model;
 # any other float number would be the modified version; the input is the last constant in the modified Muth model
-S_Fe_choice = 0
+S_Fe_choice = 1
 # log10fO2 tolerance. The value of this number may cause individual outliners in the fO2 calcuation. However, if sigma
 # is too small, it may cause the fault fO2 calculation
 sigma = 0.01
@@ -183,6 +183,13 @@ def_variables = NewVariables(P_initial, l)
 my_data = def_variables.results_dic()
 # Dataframe to store the output results
 df_results = pd.DataFrame(data=my_data)
+print(df_results["pressure"].head())
+print(df_results["pressure"].tail())
+print("Final pressure =", df_results["pressure"].iloc[-1])
+# 0.1 MPa = 1 bar
+# P_final = 0.1  # MPa
+# df_results["pressure"] = np.linspace(P_initial / 10, P_final, l)
+
 # This dataframe will only be used if the monte-carlo simulation option is enabled.
 df_results_m = pd.DataFrame(data=my_data)
 

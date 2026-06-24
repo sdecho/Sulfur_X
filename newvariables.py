@@ -48,7 +48,7 @@ class NewVariables:
                rs_f_tr, melt_fraction_tr, crystal_fraction_tr, vapor_fraction_tr, sulfide_frac_tr
 
     def results_dic(self):
-        pressure = np.linspace(self.P / 10, 1, self.step)
+        pressure = np.linspace(self.P / 10, 0.1, self.step)
         empty_list = np.linspace(0, 0, len(pressure))
         my_data = {"pressure": pressure,
                    "fO2": empty_list,
